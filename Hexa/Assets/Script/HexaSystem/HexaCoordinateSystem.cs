@@ -1,63 +1,76 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-// https://www.redblobgames.com/grids/hexagons/ 참고
+// https://www.redblobgames.com/grids/hexagons/ 참고할것.
 namespace GHJ_Lib
 {
-	public class HexaCoordinateSystem<T>
+	public class HexaCoordinateSystem
 	{
-		List<List<T>> hexaCollection_q = new List<List<T>>();
-		List<T> collections;
-		public List<T> Collections
+		public List<List<Hexa>> hexaCollectionCycle { get; private set; } = new List<List<Hexa>>();
+		public int Length { get; private set; }
+		public HexaCoordinateSystem(int sideLength)
 		{
-			get 
-			{
-				if (collections == null)
-				{
-					collections = new List<T>();
-					for (int i = 0; i < hexaCollection_q.Count; ++i)
-					{
-						collections.AddRange(hexaCollection_q[i]);
-					}
-				}
+			hexaCollectionCycle = Hexa.CreateHexaCollection(sideLength);
 
-				return collections;
-			}
+			Length = 1 + (int)((sideLength - 2) * (sideLength - 1) * 0.5);
 		}
 
-		int length;
-		public int Length { get { return length + 1; } }
-
-		public HexaCoordinateSystem(int SideLength)
+		public int GetIndex(Hexa hexa)
 		{
-			length = SideLength-1;
-			int ListLength = length * 2 + 1;
-			int direction = 1;
-			int VerticalLength = length + 1;
-			for (int i = 0; i < ListLength; ++i)
-			{
-				List<T> hexaVericalElements = new List<T>();
-				hexaVericalElements.Capacity = VerticalLength;
-				if (i == length)
-					direction = -1;
-				VerticalLength += direction;
-				hexaCollection_q.Add(hexaVericalElements);
-			}
+			int cycle;
+			int element;
+			GetCycleAndElement(hexa.q, hexa.r, hexa.s, out cycle, out element);
+			return cycle==0 ? 0 : 1 + (cycle*(cycle-1))*3 + element ;
 		}
 
-		public bool GetObjectInHexaTile(int q, int r,int s,out T Obj)
+		public Hexa? GetHexa(int q, int r, int s)
+		{
+			int cycle;
+			int element ;
+			GetCycleAndElement(q, r, s,out cycle, out element);
+			return hexaCollectionCycle[cycle][element];
+		}
+
+		void GetCycleAndElement(int q, int r, int s,out int cycle, out int element)
 		{
 			if (q + r + s != 0)
 			{
-				Debug.LogError("this Position is outofHexaRange");
-				Obj = hexaCollection_q[0][0];
-				return false;
+				cycle = 0;
+				element = 0;
+				Debug.LogError("q + r + s != 0");
+				return;
 			}
 
-			Obj = hexaCollection_q[length + q ][q < 0 ? length - s  : length + r ];
-			return true;
+			cycle = maxAbs(q, r, s);
+			element = 0;
+			if (q * r <= 0 && r != 0)
+			{
+				element = -s + cycle;
+			}
+			else if (r * s < 0 && s != 0)
+			{
+				element = -q + 3 * cycle;
+			}
+			else if (s * q < 0 && q != 0)
+			{
+				element = -r + 5 * cycle;
+			}
+			else
+			{
+				Debug.LogError("this hexaIndex not exist");
+			}
+			
 		}
 
 
+		int maxAbs(int q, int r, int s)
+		{
+			q = q < 0 ? -q : q;
+			r = r < 0 ? -r : r;
+			s = s < 0 ? -s : s;
+
+			return Mathf.Max(q, r, s);
+
+		}
 	}
 }

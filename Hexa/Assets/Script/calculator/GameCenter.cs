@@ -7,8 +7,10 @@ namespace GHJ_Lib
 	public class GameCenter : MonoBehaviour
 	{
 		PuzzleGenerator puzzleGenerator;
-		HexaCoordinateSystem<Puzzle> hexaCoordinateSystem;
-
+		HexaCoordinateSystem hexaCoordinateSystem;
+        PlayerData playerData;
+        PuzzleData puzzleData;
+        List<Puzzle> puzzleList = new List<Puzzle>();
         enum PuzzleState { 
         Move,
         Stop,
@@ -18,7 +20,9 @@ namespace GHJ_Lib
         PuzzleState puzzleState = PuzzleState.Stop;
         void Start()
         {
-            initSettingAllRandom(4);
+            playerData = Datamanager.Instance.PlayerData;
+            puzzleData = Datamanager.Instance.PuzzleData;
+            initSetting(4);
 
         }
 
@@ -40,32 +44,55 @@ namespace GHJ_Lib
             }
         }
 
-        void initSettingAllRandom(int SideLength)
+        void initSetting(int sideLength)
         {
-            hexaCoordinateSystem = new HexaCoordinateSystem<Puzzle>(SideLength); // 각스테이지마다 다르게 설정할수 있도록해야함
-            List<Puzzle> puzzles = hexaCoordinateSystem.Collections;
-
-            for (int i = 0; i < puzzles.Count ; ++i)
+            SetPuzzleAllRandom(sideLength);
+            GameObject Tile = puzzleData.TilePrefab;
+            
+            float interval = 15.0f;
+            for (int i = 0; i < puzzleList.Count; ++i)
             {
-                puzzles[i] = new Puzzle();
+                Setting(puzzleList[i], Tile,interval);
             }
         }
 
-        void SetPuzzleType(int q,int r, int s, Puzzle.Type type)
+        void SetPuzzleAllRandom(int sideLength)
         {
-            Puzzle SettingPuzzle;
-            if (hexaCoordinateSystem.GetObjectInHexaTile(q, r, s, out SettingPuzzle))
-            {
-                SettingPuzzle.SetPuzzle(type);
-            }
+            if (sideLength <= 0)
+                return;
 
+            hexaCoordinateSystem = new HexaCoordinateSystem(sideLength);
+            puzzleList.Add(new Puzzle(hexaCoordinateSystem.hexaCollectionCycle[0][0]));
+            for (int cycle = 1; cycle < sideLength; ++cycle)
+            {
+                for (int element = 0; element < cycle * 6; ++element)
+                {
+                    puzzleList.Add(new Puzzle(hexaCoordinateSystem.hexaCollectionCycle[cycle][element]));
+                }
+            }
         }
+        void Setting(Puzzle puzzle ,GameObject Tile,float interval)
+        {
+            Vector2 position2D = puzzle.hexa.Position* Tile.transform.localScale.x*0.5f;
+            Instantiate(Tile, new Vector3(position2D.x, position2D.y) + Tile.transform.position, Tile.transform.rotation);
+            Instantiate(puzzleData.PuzzlePrefabs[(int)puzzle.type], new Vector3(position2D.x, position2D.y), Quaternion.identity);
+        }
+
+        void SetPuzzleType(List<Hexa> hexas , Puzzle.Type type) //이 함수를 통해 초기에 고정된타일을 설정한다.
+        {
+            for (int i = 0; i < hexas.Count; ++i)
+            {
+                puzzleList[hexaCoordinateSystem.GetIndex(hexas[i])].SetPuzzle(type);
+            }
+        }
+
+
 
         void CheckAllPuzzle()
         {
             
         }
-
+        /*
         void CheckPuzzle(int q,int r,int s)
         {
             Puzzle puzzle;
@@ -135,6 +162,6 @@ namespace GHJ_Lib
             }
 
         }
-
+        */
     }
 }

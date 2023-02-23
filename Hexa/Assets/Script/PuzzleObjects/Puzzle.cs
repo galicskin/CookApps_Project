@@ -15,10 +15,16 @@ namespace GHJ_Lib
 			Purple,
 			Top 
 		}
+		public Puzzle(Hexa hexa)
+		{
+			this.hexa = hexa;
+			SetPuzzle();
+		}
+		public Hexa hexa { get; private set; }
 		public Type type { get; private set; }
         void Start()
         {
-			SetPuzzle();
+			
 		}
         public void SetPuzzle(Type initType)
 		{
