@@ -6,6 +6,7 @@ namespace GHJ_Lib
 {
 	public class PuzzleGenerator :MonoBehaviour
 	{
+        public Queue<GameObject> PuzzlePool = new Queue<GameObject>();
         PuzzleData puzzleData;
         GameObject tile;
         GameObject Tile 
@@ -34,6 +35,11 @@ namespace GHJ_Lib
             Instantiate(Tile, new Vector3(position2D.x, position2D.y) + Tile.transform.position, Tile.transform.rotation);
             GameObject Obj= Instantiate(puzzleData.PuzzlePrefabs[(int)puzzle.type], new Vector3(position2D.x, position2D.y), Quaternion.identity);
             puzzle.PuzzleObj = Obj;
+        }
+
+        public GameObject GeneratePuzzleOnHead(Hexa Head)
+        {
+            return null;
         }
     }
 }

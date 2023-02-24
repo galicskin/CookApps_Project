@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +7,7 @@ namespace GHJ_Lib
 {
 	public class GameCenter : MonoBehaviour
 	{
+
 		PuzzleGenerator puzzleGenerator;
         HexaLogicCalculator calculator;
         HexaCoordinateSystem hexaCoordinateSystem;
@@ -15,9 +17,10 @@ namespace GHJ_Lib
         PuzzleData puzzleData;
         List<Puzzle> puzzleList = new List<Puzzle>();
         List<Hexa> BottomHexas = new List<Hexa>();
-        Queue<GameObject> PuzzlePool = new Queue<GameObject>();
         Puzzle boundaryPuzzle;
+        int hexaSize = 4;
         // Debug
+        List<Hexa> DebugList = new List<Hexa>();
         List<Puzzle> checkList = new List<Puzzle>();
 
 
@@ -36,7 +39,7 @@ namespace GHJ_Lib
             GameObject GeneratorObj = new GameObject("PuzzleGenerator");
             puzzleGenerator = GeneratorObj.AddComponent<PuzzleGenerator>();
             puzzleGenerator.SetData(puzzleData);
-            initSetting(4);
+            initSetting();
 
         }
 
@@ -46,7 +49,7 @@ namespace GHJ_Lib
             {
                 case GameState.Move:
                     {
-                        MovePuzzle();
+                        
                     }
                     break;
                 case GameState.Stop:
@@ -66,6 +69,7 @@ namespace GHJ_Lib
                         if (Input.GetKeyDown(KeyCode.B))
                         { 
                             ErasePuzzle();
+                            MoveSetting();
                         }
                         if (Input.GetKeyDown(KeyCode.C))
                         {
@@ -81,18 +85,30 @@ namespace GHJ_Lib
 
             }
         }
-
-        void initSetting(int sideLength)
+        private void FixedUpdate()
         {
-            SetPuzzleAllRandom(sideLength);
+            for (int i = 0; i < puzzleList.Count; ++i)
+            {
+                puzzleList[i].DownMove();
+            }
+        }
+        void initSetting()
+        {
+            SetPuzzleAllRandom(hexaSize);
+
             for (int i = 0; i < puzzleList.Count; ++i)
             {
                 puzzleGenerator.Setting(puzzleList[i]);
             }
             boundaryPuzzle = new Puzzle(new Hexa(0, 0));
             boundaryPuzzle.SetPuzzle(Puzzle.Type.Boundary);
-            int r = (sideLength - 1);
-            for (int q = -r; q < sideLength*2-1; ++q)
+            SettingBottomHexas();
+        }
+
+        void SettingBottomHexas()
+        {
+            int r = (hexaSize - 1);
+            for (int q = -r; q < hexaSize * 2 - 1 -r; ++q)
             {
                 BottomHexas.Add(new Hexa(q, q > 0 ? r - q : r));
             }
@@ -118,7 +134,7 @@ namespace GHJ_Lib
         {
             for (int i = 0; i < puzzleList.Count; ++i)
             {
-                if (puzzleList[i].checkState != Puzzle.CheckState.None)
+                if (puzzleList[i].CurState != Puzzle.State.None)
                     continue;
                 puzzleList[i].Check();
                 Hexa CheckHexa = puzzleList[i].hexa;
@@ -162,6 +178,7 @@ namespace GHJ_Lib
         {
             Puzzle.Type centerType = GetPuzzle(center).type;
             Hexa[] hexaAry = HexaCoordinateSystem.GetHexaVectors();
+
 
             for (int i = 0; i < hexaAry.Length; ++i)
             {
@@ -227,10 +244,10 @@ namespace GHJ_Lib
             bool isExistEmpty = false;
             for (int i = 0; i < puzzleList.Count; ++i)
             {
-                if (puzzleList[i].checkState == Puzzle.CheckState.Erase)
+                if (puzzleList[i].CurState == Puzzle.State.Erase)
                 {
                     puzzleList[i].SetPuzzle(Puzzle.Type.Empty);
-                    PuzzlePool.Enqueue(puzzleList[i].PuzzleObj);
+                    puzzleGenerator.PuzzlePool.Enqueue(puzzleList[i].PuzzleObj);
                     puzzleList[i].PuzzleObj.SetActive(false);  // 만약 애니매이션이 존재한다면 애니매이션을 실행시키는 함수를 발동.
                     puzzleList[i].PuzzleObj = null;
                     isExistEmpty = true;
@@ -248,23 +265,89 @@ namespace GHJ_Lib
             }
         }
 
-        void MovePuzzle()
+        // 기존에 있던 퍼즐들은 무조건 아래로, 새로생긴 퍼즐은 맨 위에서 퍼짐. (바로직선아래 오른쪽 왼쪽순서)
+        void MoveSetting()
         {
-            for (int i = 0; i < puzzleList.Count; ++i)
+            for (int i = 0; i < BottomHexas.Count; ++i)
             {
-                if (puzzleList[i].PuzzleObj != null)
+                Hexa destHexa = BottomHexas[i];
+                Puzzle destCursor = GetPuzzle(destHexa);
+                while (destCursor.type != Puzzle.Type.Boundary)
                 {
-                    //puzzleList[i].DownMove();
+                    if (destCursor.type == Puzzle.Type.Empty)
+                    {
+                        break;
+                    }
+                    destHexa = destHexa + Hexa.Up;
+                    destCursor = GetPuzzle(destHexa);
                 }
+
+                Hexa startHexa = destHexa + Hexa.Up;
+                Puzzle DropPuzzle = GetPuzzle(startHexa);
+
+                while (DropPuzzle.type != Puzzle.Type.Boundary)
+                {
+                    if (DropPuzzle.type != Puzzle.Type.Empty)
+                    {
+                        DropPuzzle.SetDirection(destCursor, Hexa.Down);
+                        BottomHexas[i] = destHexa;
+                        destHexa = destHexa + Hexa.Up;
+                        destCursor = GetPuzzle(destHexa);
+                    }
+                    startHexa = startHexa + Hexa.Up;
+                    DropPuzzle = GetPuzzle(startHexa);
+                }
+            }
+        }
+
+        void SearchDest()
+        {
+            for (int i= 0; i < BottomHexas.Count; ++i)
+            {
+                Hexa headPuzzleHexa = BottomHexas[i] + Hexa.Down;
                 
             }
         }
+
+        void DecideDest()
+        {
+            
+        }
+
+            /*
+            for (int i = 0; i < puzzleList.Count; ++i)
+            {
+                if (puzzleList[i].type == Puzzle.Type.Empty && puzzleList[i].CurState != Puzzle.State.WaitPuzzle )
+                {
+                    Puzzle DropPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.Up);
+                    if (DropPuzzle.PuzzleObj != null&& DropPuzzle.CurState != Puzzle.State.Move)
+                    {
+                        DropPuzzle.SetDirection(puzzleList[i], Hexa.Down);
+                        continue;
+                    }
+                    DropPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.RightUp);
+                    if (DropPuzzle.PuzzleObj != null && DropPuzzle.CurState != Puzzle.State.Move)
+                    {
+                        DropPuzzle.SetDirection(puzzleList[i], Hexa.LeftDown);
+                        continue;
+                    }
+                    DropPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.LeftUp);
+                    if (DropPuzzle.PuzzleObj != null && DropPuzzle.CurState != Puzzle.State.Move)
+                    {
+                        DropPuzzle.SetDirection(puzzleList[i], Hexa.RightDown);
+                        continue;
+                    }
+                }
+                
+            }
+            */
+
 
         void OnDrawGizmos()
         {
             for (int i = 0; i < puzzleList.Count; ++i)
             {
-                if (puzzleList[i].checkState == Puzzle.CheckState.Erase)
+                if (puzzleList[i].CurState == Puzzle.State.Erase)
                     Gizmos.DrawSphere(puzzleList[i].PuzzleObj.transform.position, 1.0f);
             }
         }

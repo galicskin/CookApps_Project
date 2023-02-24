@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GHJ_Lib
 {
-	public class Puzzle
+	public class Puzzle 
 	{
 		public static float Interval { get; private set; }
 		public enum Type {
@@ -19,10 +19,11 @@ namespace GHJ_Lib
 			Empty
 		}
 
-		public enum CheckState {
+		public enum State {
 			None,
 			Check,
-			Erase
+			Erase,
+			Move,
 		}
 		
 		public Puzzle(Hexa hexa)
@@ -30,32 +31,31 @@ namespace GHJ_Lib
 			this.hexa = hexa;
 			SetPuzzle();
 		}
-		public GameObject PuzzleObj;
+		public GameObject PuzzleObj = null;
 		public Hexa hexa { get; private set; }
 		public Type type { get; private set; }
-		public CheckState checkState { get; private set; } = CheckState.None;
-		Vector3 moveDirection;
-		void Start()
-        {
-			
-		}
-		public static void SetInterval(float TileSideLength)
+		public State CurState { get; private set; } = State.None;
+        public static void SetInterval(float TileSideLength)
 		{
 			Interval = TileSideLength;
 		}
+		Hexa moveHexaDirection=new Hexa(0,0);
+		//Puzzle destPuzzle;
+		float MoveVelocity = 10.0f;
+
 		public void None()
 		{
-			checkState = CheckState.None;
+			CurState = State.None;
 		}
 		public void Check()
 		{
-			if (checkState != CheckState.Erase)
-				checkState = CheckState.Check;
+			if (CurState != State.Erase)
+				CurState = State.Check;
 		}
 
 		public void Erase()
 		{
-			checkState = CheckState.Erase;
+			CurState = State.Erase;
 		}
 
         public void SetPuzzle(Type initType)
@@ -67,9 +67,46 @@ namespace GHJ_Lib
 			type = (Type)Random.Range((int)Type.Red, (int)Type.Purple); // enumÀº int32¿¡¼­´Â ¹Ú½Ì ¾ð¹Ú½ÌÀÌ ¾ÈÀÏ¾î³ª¼­ ±¦Ãá
 		}
 
-		public void DownMove(Hexa DirectionHexa)
+		public void SetDirection(Puzzle destPuzzle, Hexa direction)
 		{
-			moveDirection = new Vector3(DirectionHexa.Position.x,DirectionHexa.Position.y);
+			Swap(destPuzzle);
+			destPuzzle.moveHexaDirection = direction;
+			destPuzzle.CurState = State.Move;
+		}
+		public void Stop()
+		{
+			moveHexaDirection = new Hexa(0, 0);
+			CurState = State.Check;
+		}
+		public void DownMove()
+		{
+			if (CurState != State.Move)
+				return;
+
+			Vector2 vector2Pos= new Vector2(PuzzleObj.transform.position.x, PuzzleObj.transform.position.y);
+			if ((vector2Pos - hexa.Position*Interval).sqrMagnitude < 0.01f)
+			{
+				PuzzleObj.transform.position = hexa.Position*Interval;
+				Stop();
+			}
+			else
+			{ 
+				Vector3 moveDirection = new Vector3(moveHexaDirection.Position.x, moveHexaDirection.Position.y);
+				PuzzleObj.transform.Translate(moveDirection * Time.deltaTime* MoveVelocity);
+			}
+		}
+
+		void Swap(Puzzle DestPuzzle)
+		{
+			GameObject tempObj = PuzzleObj;
+			Type tempType = type;
+
+			PuzzleObj = DestPuzzle.PuzzleObj;
+			type = DestPuzzle.type;
+
+			DestPuzzle.PuzzleObj = tempObj;
+			DestPuzzle.type = tempType;
+			
 		}
 	}
 }

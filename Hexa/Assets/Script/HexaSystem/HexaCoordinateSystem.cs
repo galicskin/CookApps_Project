@@ -6,7 +6,7 @@ namespace GHJ_Lib
 {
 	public class HexaCoordinateSystem
 	{
-		public enum Directrion 
+		public enum Direction 
 		{
 			Up,
 			RightUp,
@@ -41,40 +41,6 @@ namespace GHJ_Lib
 			return hexaCollectionCycle[cycle][element];
 		}
 
-		public static Hexa GetHexa(Directrion directrion)
-		{
-			switch (directrion)
-			{
-				case Directrion.Up:
-					{
-						return new Hexa(0, -1);
-					}
-				case Directrion.RightUp:
-					{
-						return new Hexa(1, -1);
-					}
-				case Directrion.RightDown:
-					{
-						return new Hexa(1, 0);
-					}
-				case Directrion.Down:
-					{
-						return new Hexa(0, 1);
-					}
-				case Directrion.LeftDown:
-					{
-						return new Hexa(-1, 1);
-					}
-				case Directrion.LeftUp:
-					{
-						return new Hexa(-1, 0);
-					}
-				default:
-					{
-						return new Hexa(0, 0);
-					}
-			}
-		}
 
 
 		public static Hexa[] GetHexaVectors()

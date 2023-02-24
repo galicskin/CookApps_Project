@@ -35,6 +35,54 @@ namespace GHJ_Lib
             return a.q != b.q || a.r != b.r || a.q != b.q;
         }
 
+        public static Hexa Up
+        {
+            get 
+            {
+                return new Hexa(0, -1);
+            }
+        }
+
+        public static Hexa RightUp
+        {
+            get
+            {
+                return new Hexa(1, -1);
+            }
+        }
+
+        public static Hexa RightDown
+        {
+            get
+            {
+                return new Hexa(1, 0);
+            }
+        }
+
+        public static Hexa Down
+        {
+            get
+            {
+                return new Hexa(0, 1);
+            }
+        }
+
+        public static Hexa LeftDown
+        {
+            get
+            {
+                return new Hexa(-1, 1);
+            }
+        }
+
+        public static Hexa LeftUp
+        {
+            get
+            {
+                return new Hexa(-1, 0);
+            }
+        }
+
 
 
         public int q { get; private set; }
