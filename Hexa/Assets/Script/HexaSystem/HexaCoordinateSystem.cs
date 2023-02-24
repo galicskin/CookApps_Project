@@ -6,6 +6,16 @@ namespace GHJ_Lib
 {
 	public class HexaCoordinateSystem
 	{
+		public enum Directrion 
+		{
+			Up,
+			RightUp,
+			RightDown,
+			Down,
+			LeftDown,
+			LeftUp,
+		}
+
 		public List<List<Hexa>> hexaCollectionCycle { get; private set; } = new List<List<Hexa>>();
 		public int Length { get; private set; }
 		public HexaCoordinateSystem(int sideLength)
@@ -31,7 +41,43 @@ namespace GHJ_Lib
 			return hexaCollectionCycle[cycle][element];
 		}
 
-		public Hexa[] GetHexaVectors()
+		public static Hexa GetHexa(Directrion directrion)
+		{
+			switch (directrion)
+			{
+				case Directrion.Up:
+					{
+						return new Hexa(0, -1);
+					}
+				case Directrion.RightUp:
+					{
+						return new Hexa(1, -1);
+					}
+				case Directrion.RightDown:
+					{
+						return new Hexa(1, 0);
+					}
+				case Directrion.Down:
+					{
+						return new Hexa(0, 1);
+					}
+				case Directrion.LeftDown:
+					{
+						return new Hexa(-1, 1);
+					}
+				case Directrion.LeftUp:
+					{
+						return new Hexa(-1, 0);
+					}
+				default:
+					{
+						return new Hexa(0, 0);
+					}
+			}
+		}
+
+
+		public static Hexa[] GetHexaVectors()
 		{
 			Hexa[] hexaArray = new Hexa[3];
 
@@ -60,7 +106,7 @@ namespace GHJ_Lib
 			return T_List;
 		}
 
-		void GetCycleAndElement(int q, int r, int s,out int cycle, out int element)
+		static void GetCycleAndElement(int q, int r, int s,out int cycle, out int element)
 		{
 			if (q + r + s != 0)
 			{
@@ -98,7 +144,7 @@ namespace GHJ_Lib
 		}
 
 
-		int maxAbs(int q, int r, int s)
+		static int maxAbs(int q, int r, int s)
 		{
 			q = q < 0 ? -q : q;
 			r = r < 0 ? -r : r;

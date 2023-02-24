@@ -10,7 +10,7 @@ namespace GHJ_Lib
         {
             this.q = q;
             this.r = r;
-            this.s = -q-r;
+            s = -q-r;
         }
         public static Hexa operator +(Hexa a, Hexa b)
         {
@@ -34,6 +34,7 @@ namespace GHJ_Lib
         {
             return a.q != b.q || a.r != b.r || a.q != b.q;
         }
+
 
 
         public int q { get; private set; }
@@ -107,6 +108,7 @@ namespace GHJ_Lib
         {
             return new Vector2(q * 1.5f, 1.732f * (s - r)*0.5f);
         }
+
 
     }
 

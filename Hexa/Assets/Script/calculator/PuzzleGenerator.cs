@@ -29,7 +29,8 @@ namespace GHJ_Lib
 
         public void Setting(Puzzle puzzle)
         {
-            Vector2 position2D = puzzle.hexa.Position * Tile.transform.localScale.x * 0.5f;
+            Puzzle.SetInterval(Tile.transform.localScale.x * 0.5f);
+            Vector2 position2D = puzzle.hexa.Position * Puzzle.Interval;
             Instantiate(Tile, new Vector3(position2D.x, position2D.y) + Tile.transform.position, Tile.transform.rotation);
             GameObject Obj= Instantiate(puzzleData.PuzzlePrefabs[(int)puzzle.type], new Vector3(position2D.x, position2D.y), Quaternion.identity);
             puzzle.PuzzleObj = Obj;

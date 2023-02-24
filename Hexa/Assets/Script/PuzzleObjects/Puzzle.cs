@@ -6,6 +6,7 @@ namespace GHJ_Lib
 {
 	public class Puzzle
 	{
+		public static float Interval { get; private set; }
 		public enum Type {
 			Red,
 			Blue,
@@ -33,9 +34,14 @@ namespace GHJ_Lib
 		public Hexa hexa { get; private set; }
 		public Type type { get; private set; }
 		public CheckState checkState { get; private set; } = CheckState.None;
+		Vector3 moveDirection;
 		void Start()
         {
 			
+		}
+		public static void SetInterval(float TileSideLength)
+		{
+			Interval = TileSideLength;
 		}
 		public void None()
 		{
@@ -59,6 +65,11 @@ namespace GHJ_Lib
 		public void SetPuzzle()
 		{
 			type = (Type)Random.Range((int)Type.Red, (int)Type.Purple); // enumÀº int32¿¡¼­´Â ¹Ú½Ì ¾ð¹Ú½ÌÀÌ ¾ÈÀÏ¾î³ª¼­ ±¦Ãá
+		}
+
+		public void DownMove(Hexa DirectionHexa)
+		{
+			moveDirection = new Vector3(DirectionHexa.Position.x,DirectionHexa.Position.y);
 		}
 	}
 }

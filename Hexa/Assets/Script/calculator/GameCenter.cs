@@ -14,6 +14,8 @@ namespace GHJ_Lib
         PlayerData playerData;
         PuzzleData puzzleData;
         List<Puzzle> puzzleList = new List<Puzzle>();
+        List<Hexa> BottomHexas = new List<Hexa>();
+        Queue<GameObject> PuzzlePool = new Queue<GameObject>();
         Puzzle boundaryPuzzle;
         // Debug
         List<Puzzle> checkList = new List<Puzzle>();
@@ -43,7 +45,9 @@ namespace GHJ_Lib
             switch (puzzleState)
             {
                 case GameState.Move:
-                    { }
+                    {
+                        MovePuzzle();
+                    }
                     break;
                 case GameState.Stop:
                     {
@@ -70,7 +74,6 @@ namespace GHJ_Lib
                                 int index = hexaCoordinateSystem.GetIndex(puzzleList[i].hexa);
                                 Debug.Log(index);
                             }
-                            
                         }
 
                     }
@@ -88,6 +91,11 @@ namespace GHJ_Lib
             }
             boundaryPuzzle = new Puzzle(new Hexa(0, 0));
             boundaryPuzzle.SetPuzzle(Puzzle.Type.Boundary);
+            int r = (sideLength - 1);
+            for (int q = -r; q < sideLength*2-1; ++q)
+            {
+                BottomHexas.Add(new Hexa(q, q > 0 ? r - q : r));
+            }
         }
 
         void SetPuzzleAllRandom(int sideLength)
@@ -149,10 +157,11 @@ namespace GHJ_Lib
 
         }
 
+        
         void CheckLinear(Hexa center)
         {
             Puzzle.Type centerType = GetPuzzle(center).type;
-            Hexa[] hexaAry = hexaCoordinateSystem.GetHexaVectors();
+            Hexa[] hexaAry = HexaCoordinateSystem.GetHexaVectors();
 
             for (int i = 0; i < hexaAry.Length; ++i)
             {
@@ -221,7 +230,9 @@ namespace GHJ_Lib
                 if (puzzleList[i].checkState == Puzzle.CheckState.Erase)
                 {
                     puzzleList[i].SetPuzzle(Puzzle.Type.Empty);
+                    PuzzlePool.Enqueue(puzzleList[i].PuzzleObj);
                     puzzleList[i].PuzzleObj.SetActive(false);  // 만약 애니매이션이 존재한다면 애니매이션을 실행시키는 함수를 발동.
+                    puzzleList[i].PuzzleObj = null;
                     isExistEmpty = true;
                 }
                 puzzleList[i].None();
@@ -234,6 +245,18 @@ namespace GHJ_Lib
             else
             {
                 puzzleState = GameState.Stop;
+            }
+        }
+
+        void MovePuzzle()
+        {
+            for (int i = 0; i < puzzleList.Count; ++i)
+            {
+                if (puzzleList[i].PuzzleObj != null)
+                {
+                    //puzzleList[i].DownMove();
+                }
+                
             }
         }
 
