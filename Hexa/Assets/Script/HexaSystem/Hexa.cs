@@ -12,6 +12,29 @@ namespace GHJ_Lib
             this.r = r;
             this.s = -q-r;
         }
+        public static Hexa operator +(Hexa a, Hexa b)
+        {
+            return new Hexa(a.q + b.q, a.r + b.r);
+        }
+        public static Hexa operator -(Hexa a)
+        {
+            return new Hexa(-a.q, -a.r );
+        }
+        public static Hexa operator -(Hexa a, Hexa b)
+        {
+            return new Hexa(a.q - b.q, a.r - b.r);
+        }
+
+        public static bool operator ==(Hexa a, Hexa b)
+        {
+            return a.q == b.q && a.r == b.r;
+        }
+
+        public static bool operator !=(Hexa a, Hexa b)
+        {
+            return a.q != b.q || a.r != b.r || a.q != b.q;
+        }
+
 
         public int q { get; private set; }
         public int r { get; private set; }
@@ -25,7 +48,7 @@ namespace GHJ_Lib
             }
         }
 
-        static public List<List<Hexa>> CreateHexaCollection(int sideLength)
+        public static List<List<Hexa>> CreateHexaCollection(int sideLength)
         {
             List<List<Hexa>> hexalist = null;
             if (sideLength > 0)
@@ -80,9 +103,9 @@ namespace GHJ_Lib
             return hexalist;
         }
 
-        static public Vector2 ToVector2(int q, int r, int s)
+        public static Vector2 ToVector2(int q, int r, int s)
         {
-            return new Vector2(q * 1.5f, 1.732f * (s - r));
+            return new Vector2(q * 1.5f, 1.732f * (s - r)*0.5f);
         }
 
     }

@@ -31,6 +31,35 @@ namespace GHJ_Lib
 			return hexaCollectionCycle[cycle][element];
 		}
 
+		public Hexa[] GetHexaVectors()
+		{
+			Hexa[] hexaArray = new Hexa[3];
+
+			hexaArray[0] = new Hexa(0,- 1);
+			hexaArray[1] = new Hexa(1,  -1);
+			hexaArray[2] = new Hexa(1, 0);
+
+			return hexaArray;
+		}
+
+		public List<T> SetHexaCollect<T>(int sideLength) where T : Puzzle
+		{
+			List<T> T_List = new List<T>();
+			T ds = (T)new Puzzle(hexaCollectionCycle[0][0]);
+			T_List.Add((T)new Puzzle(hexaCollectionCycle[0][0]));
+
+
+			for (int cycle = 1; cycle < sideLength; ++cycle)
+			{
+				for (int element = 0; element < cycle * 6; ++element)
+				{
+					T_List.Add((T)new Puzzle(hexaCollectionCycle[cycle][element]));
+				}
+			}
+
+			return T_List;
+		}
+
 		void GetCycleAndElement(int q, int r, int s,out int cycle, out int element)
 		{
 			if (q + r + s != 0)
@@ -40,24 +69,30 @@ namespace GHJ_Lib
 				Debug.LogError("q + r + s != 0");
 				return;
 			}
-
+			
 			cycle = maxAbs(q, r, s);
 			element = 0;
-			if (q * r <= 0 && r != 0)
+			if (q >= 0 && r < 0)
 			{
 				element = -s + cycle;
 			}
-			else if (r * s < 0 && s != 0)
+			else if (r  >= 0 && s < 0)
 			{
 				element = -q + 3 * cycle;
 			}
-			else if (s * q < 0 && q != 0)
+			else if (s >= 0 && q < 0)
 			{
 				element = -r + 5 * cycle;
 			}
+			else if (cycle == 0)
+			{
+				cycle = 0;
+				element = 0;
+			}
 			else
 			{
-				Debug.LogError("this hexaIndex not exist");
+
+				Debug.LogError($"this hexaIndex not exist, q : {q}, r : {r}, s: {s} cycle : {cycle} , element {element}");
 			}
 			
 		}

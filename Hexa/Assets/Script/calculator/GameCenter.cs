@@ -7,21 +7,33 @@ namespace GHJ_Lib
 	public class GameCenter : MonoBehaviour
 	{
 		PuzzleGenerator puzzleGenerator;
-		HexaCoordinateSystem hexaCoordinateSystem;
+        HexaLogicCalculator calculator;
+        HexaCoordinateSystem hexaCoordinateSystem;
+
+
         PlayerData playerData;
         PuzzleData puzzleData;
         List<Puzzle> puzzleList = new List<Puzzle>();
-        enum PuzzleState { 
+        Puzzle boundaryPuzzle;
+        // Debug
+        List<Puzzle> checkList = new List<Puzzle>();
+
+
+        enum GameState { 
         Move,
         Stop,
         Swap,
+        CheckAll,
         }
 
-        PuzzleState puzzleState = PuzzleState.Stop;
+        GameState puzzleState = GameState.CheckAll;
         void Start()
         {
             playerData = Datamanager.Instance.PlayerData;
             puzzleData = Datamanager.Instance.PuzzleData;
+            GameObject GeneratorObj = new GameObject("PuzzleGenerator");
+            puzzleGenerator = GeneratorObj.AddComponent<PuzzleGenerator>();
+            puzzleGenerator.SetData(puzzleData);
             initSetting(4);
 
         }
@@ -30,15 +42,38 @@ namespace GHJ_Lib
         {
             switch (puzzleState)
             {
-                case PuzzleState.Move:
+                case GameState.Move:
                     { }
                     break;
-                case PuzzleState.Stop:
-                    { 
+                case GameState.Stop:
+                    {
+
                     }
                     break;
-                case PuzzleState.Swap:
+                case GameState.Swap:
                     { }
+                    break;
+                case GameState.CheckAll:
+                    {
+                        if (Input.GetKeyDown(KeyCode.A))
+                        {
+                            CheckAllPuzzle();
+                        }
+                        if (Input.GetKeyDown(KeyCode.B))
+                        { 
+                            ErasePuzzle();
+                        }
+                        if (Input.GetKeyDown(KeyCode.C))
+                        {
+                            for (int i = 0; i < puzzleList.Count; ++i)
+                            {
+                                int index = hexaCoordinateSystem.GetIndex(puzzleList[i].hexa);
+                                Debug.Log(index);
+                            }
+                            
+                        }
+
+                    }
                     break;
 
             }
@@ -47,13 +82,12 @@ namespace GHJ_Lib
         void initSetting(int sideLength)
         {
             SetPuzzleAllRandom(sideLength);
-            GameObject Tile = puzzleData.TilePrefab;
-            
-            float interval = 15.0f;
             for (int i = 0; i < puzzleList.Count; ++i)
             {
-                Setting(puzzleList[i], Tile,interval);
+                puzzleGenerator.Setting(puzzleList[i]);
             }
+            boundaryPuzzle = new Puzzle(new Hexa(0, 0));
+            boundaryPuzzle.SetPuzzle(Puzzle.Type.Boundary);
         }
 
         void SetPuzzleAllRandom(int sideLength)
@@ -62,106 +96,154 @@ namespace GHJ_Lib
                 return;
 
             hexaCoordinateSystem = new HexaCoordinateSystem(sideLength);
-            puzzleList.Add(new Puzzle(hexaCoordinateSystem.hexaCollectionCycle[0][0]));
-            for (int cycle = 1; cycle < sideLength; ++cycle)
-            {
-                for (int element = 0; element < cycle * 6; ++element)
-                {
-                    puzzleList.Add(new Puzzle(hexaCoordinateSystem.hexaCollectionCycle[cycle][element]));
-                }
-            }
+            puzzleList = hexaCoordinateSystem.SetHexaCollect<Puzzle>(sideLength);
         }
-        void Setting(Puzzle puzzle ,GameObject Tile,float interval)
-        {
-            Vector2 position2D = puzzle.hexa.Position* Tile.transform.localScale.x*0.5f;
-            Instantiate(Tile, new Vector3(position2D.x, position2D.y) + Tile.transform.position, Tile.transform.rotation);
-            Instantiate(puzzleData.PuzzlePrefabs[(int)puzzle.type], new Vector3(position2D.x, position2D.y), Quaternion.identity);
-        }
-
         void SetPuzzleType(List<Hexa> hexas , Puzzle.Type type) //이 함수를 통해 초기에 고정된타일을 설정한다.
         {
             for (int i = 0; i < hexas.Count; ++i)
             {
-                puzzleList[hexaCoordinateSystem.GetIndex(hexas[i])].SetPuzzle(type);
+                GetPuzzle(hexas[i]).SetPuzzle(type);
             }
         }
-
-
 
         void CheckAllPuzzle()
         {
-            
+            for (int i = 0; i < puzzleList.Count; ++i)
+            {
+                if (puzzleList[i].checkState != Puzzle.CheckState.None)
+                    continue;
+                puzzleList[i].Check();
+                Hexa CheckHexa = puzzleList[i].hexa;
+                CheckLinear(CheckHexa);
+                CheckBoomerang(CheckHexa);
+            }
         }
-        /*
-        void CheckPuzzle(int q,int r,int s)
+
+        void CheckBoomerang(Hexa center)
         {
-            Puzzle puzzle;
-            Puzzle.Type checkType;
-            if (hexaCoordinateSystem.GetObjectInHexaTile(q, r, s, out puzzle))
+            Puzzle CetnerPuzzle = GetPuzzle(center);
+            Puzzle[] BoomerangPuzzleList = new Puzzle[9];
+            BoomerangPuzzleList[0] = GetPuzzle(center + new Hexa(-1, 0));
+            BoomerangPuzzleList[1] = GetPuzzle(center + new Hexa(0, -1));
+            BoomerangPuzzleList[2] = GetPuzzle(center + new Hexa(1, -1));
+            BoomerangPuzzleList[3] = GetPuzzle(center + new Hexa(2, -1));
+            BoomerangPuzzleList[4] = GetPuzzle(center + new Hexa(1, 0));
+            BoomerangPuzzleList[5] = GetPuzzle(center + new Hexa(0, 1));
+            BoomerangPuzzleList[6] = GetPuzzle(center + new Hexa(-1, 1));
+            BoomerangPuzzleList[7] = GetPuzzle(center + new Hexa(-2, 1));
+            BoomerangPuzzleList[8] = BoomerangPuzzleList[0];
+
+            for (int i = 0; i < 4; ++i)
             {
-                checkType = puzzle.type;
-            }
-
-            int _q = 0;
-            int _r = 0;
-            int _s = 0;
-
-            for (int i = 0; i < 6; ++i)
-            {
-                switch (i)
+                int index = i * 2;
+                if (CetnerPuzzle.type == BoomerangPuzzleList[index].type
+               && CetnerPuzzle.type == BoomerangPuzzleList[index+1].type
+               && CetnerPuzzle.type == BoomerangPuzzleList[index+2].type)
                 {
-                    case 0:
-                        {
-                            _q = 0;
-                            _r = -1;
-                            _s = 1;
-                        }
-                        break;
-                    case 1:
-                        {
-                            _q = 1;
-                            _r = -1;
-                            _s = 0;
-                        }
-                        break;
-                    case 2:
-                        {
-                            _q = 1;
-                            _r = 0;
-                            _s = -1;
-                        }
-                        break;
-                    case 3:
-                        {
-                            _q = 0;
-                            _r = 1;
-                            _s = -1;
-                        }
-                        break;
-                    case 4:
-                        {
-                            _q = -1;
-                            _r = 1;
-                            _s = 0;
-                        }
-                        break;
-                    case 5:
-                        {
-                            _q = -1;
-                            _r = 0;
-                            _s = 1;
-                        }
-                        break;
-                }
-
-
-                if (hexaCoordinateSystem.GetObjectInHexaTile(_q, _r, _s, out puzzle))
-                {
-                    
+                    CetnerPuzzle.Erase();
+                    BoomerangPuzzleList[index].Erase();
+                    BoomerangPuzzleList[index+1].Erase();
+                    BoomerangPuzzleList[index+2].Erase();
                 }
             }
 
         }
-        */
+
+        void CheckLinear(Hexa center)
+        {
+            Puzzle.Type centerType = GetPuzzle(center).type;
+            Hexa[] hexaAry = hexaCoordinateSystem.GetHexaVectors();
+
+            for (int i = 0; i < hexaAry.Length; ++i)
+            {
+                Puzzle frontPuzzle = GetPuzzle(center + hexaAry[i]);
+                Puzzle BackPuzzle = GetPuzzle(center - hexaAry[i]);
+
+                if (centerType == frontPuzzle.type)
+                {
+                    frontPuzzle.Check();
+                    if (centerType == GetPuzzle(frontPuzzle.hexa + hexaAry[i]).type || centerType == BackPuzzle.type)
+                    {
+                        SelectLinear(hexaAry[i], center, centerType);
+                    }
+                }
+                else if (centerType == BackPuzzle.type)
+                {
+                    BackPuzzle.Check();
+                    if (centerType == GetPuzzle(BackPuzzle.hexa - hexaAry[i]).type)
+                    { 
+                        SelectLinear(hexaAry[i], center, centerType);
+                    }
+                }
+            }
+        }
+        
+        Puzzle GetPuzzle(Hexa hexa)
+        {
+            int index =hexaCoordinateSystem.GetIndex(hexa);
+            if (index >= puzzleList.Count)
+                return boundaryPuzzle;
+            return puzzleList[index];
+        }
+
+        void SelectLinear(Hexa vector,Hexa Center, Puzzle.Type centerType)
+        {
+
+            GetPuzzle(Center).Erase();
+            checkList.Add(GetPuzzle(Center));
+            Hexa direction = vector;
+            Puzzle Checkpuzzle = GetPuzzle(Center + direction);
+            while (centerType == Checkpuzzle.type)
+            {
+                Checkpuzzle.Erase();
+                checkList.Add(Checkpuzzle);
+                direction = direction + vector;
+                Checkpuzzle = GetPuzzle(Center + direction);
+            }
+            direction = vector;
+            Checkpuzzle = GetPuzzle(Center - direction);
+            while (centerType == Checkpuzzle.type)
+            {
+                Checkpuzzle.Erase();
+                checkList.Add(Checkpuzzle);
+                direction = direction + vector;
+                Checkpuzzle = GetPuzzle(Center - direction);
+            }
+            if (checkList.Count < 3)
+            { }
+        }
+
+        void ErasePuzzle()
+        {
+            bool isExistEmpty = false;
+            for (int i = 0; i < puzzleList.Count; ++i)
+            {
+                if (puzzleList[i].checkState == Puzzle.CheckState.Erase)
+                {
+                    puzzleList[i].SetPuzzle(Puzzle.Type.Empty);
+                    puzzleList[i].PuzzleObj.SetActive(false);  // 만약 애니매이션이 존재한다면 애니매이션을 실행시키는 함수를 발동.
+                    isExistEmpty = true;
+                }
+                puzzleList[i].None();
+            }
+
+            if (isExistEmpty)
+            {
+                puzzleState = GameState.Move;
+            }
+            else
+            {
+                puzzleState = GameState.Stop;
+            }
+        }
+
+        void OnDrawGizmos()
+        {
+            for (int i = 0; i < puzzleList.Count; ++i)
+            {
+                if (puzzleList[i].checkState == Puzzle.CheckState.Erase)
+                    Gizmos.DrawSphere(puzzleList[i].PuzzleObj.transform.position, 1.0f);
+            }
+        }
     }
 }

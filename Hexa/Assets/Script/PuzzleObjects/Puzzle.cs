@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace GHJ_Lib
 {
-	public class Puzzle: MonoBehaviour
+	public class Puzzle
 	{
 		public enum Type {
 			Red,
@@ -13,19 +13,45 @@ namespace GHJ_Lib
 			Orange,
 			Yellow,
 			Purple,
-			Top 
+			Top,
+			Boundary,
+			Empty
 		}
+
+		public enum CheckState {
+			None,
+			Check,
+			Erase
+		}
+		
 		public Puzzle(Hexa hexa)
 		{
 			this.hexa = hexa;
 			SetPuzzle();
 		}
+		public GameObject PuzzleObj;
 		public Hexa hexa { get; private set; }
 		public Type type { get; private set; }
-        void Start()
+		public CheckState checkState { get; private set; } = CheckState.None;
+		void Start()
         {
 			
 		}
+		public void None()
+		{
+			checkState = CheckState.None;
+		}
+		public void Check()
+		{
+			if (checkState != CheckState.Erase)
+				checkState = CheckState.Check;
+		}
+
+		public void Erase()
+		{
+			checkState = CheckState.Erase;
+		}
+
         public void SetPuzzle(Type initType)
 		{
 			type = initType;
