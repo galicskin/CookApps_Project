@@ -8,7 +8,7 @@ namespace GHJ_Lib
 	{
 		public static float Interval { get; private set; }
 		public enum Type {
-			Red,
+			Red = 0,
 			Blue,
 			Green,
 			Orange,
@@ -64,7 +64,7 @@ namespace GHJ_Lib
 		}
 		public void SetPuzzle()
 		{
-			type = (Type)Random.Range((int)Type.Red, (int)Type.Purple); // enum은 int32에서는 박싱 언박싱이 안일어나서 괜춘
+			type = (Type)Random.Range((int)Type.Red, (int)Type.Purple+1); // enum은 int32에서는 박싱 언박싱이 안일어나서 괜춘
 		}
 
 		public void SetDirection(Puzzle destPuzzle, Hexa direction)
@@ -78,10 +78,10 @@ namespace GHJ_Lib
 			moveHexaDirection = new Hexa(0, 0);
 			CurState = State.Check;
 		}
-		public void DownMove()
+		public bool DoDownMove()
 		{
 			if (CurState != State.Move)
-				return;
+				return false;
 
 			Vector2 vector2Pos= new Vector2(PuzzleObj.transform.position.x, PuzzleObj.transform.position.y);
 			if ((vector2Pos - hexa.Position*Interval).sqrMagnitude < 0.01f)
@@ -94,6 +94,8 @@ namespace GHJ_Lib
 				Vector3 moveDirection = new Vector3(moveHexaDirection.Position.x, moveHexaDirection.Position.y);
 				PuzzleObj.transform.Translate(moveDirection * Time.deltaTime* MoveVelocity);
 			}
+
+			return true;
 		}
 
 		void Swap(Puzzle DestPuzzle)

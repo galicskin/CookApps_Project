@@ -24,7 +24,14 @@ namespace GHJ_Lib
         {
             return new Hexa(a.q - b.q, a.r - b.r);
         }
-
+        public static Hexa operator *(Hexa a ,int b)
+        {
+            return new Hexa(a.q * b, a.r * b);
+        }
+        public static Hexa operator *(int a, Hexa b)
+        {
+            return new Hexa(a * b.q, a * b.r);
+        }
         public static bool operator ==(Hexa a, Hexa b)
         {
             return a.q == b.q && a.r == b.r;
@@ -34,6 +41,8 @@ namespace GHJ_Lib
         {
             return a.q != b.q || a.r != b.r || a.q != b.q;
         }
+
+
 
         public static Hexa Up
         {

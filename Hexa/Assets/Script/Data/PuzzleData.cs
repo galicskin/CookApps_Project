@@ -8,6 +8,8 @@ namespace GHJ_Lib
 	public class PuzzleData: StaticData
 	{
 		public List<GameObject> PuzzlePrefabs = new List<GameObject>();
+		public List<Puzzle.Type> PuzzleTypes = new List<Puzzle.Type>();
+
 		public GameObject TilePrefab;
 	}
 }

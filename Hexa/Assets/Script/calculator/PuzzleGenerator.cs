@@ -6,7 +6,11 @@ namespace GHJ_Lib
 {
 	public class PuzzleGenerator :MonoBehaviour
 	{
-        public Queue<GameObject> PuzzlePool = new Queue<GameObject>();
+        //Queue<GameObject> PuzzlePool = new Queue<GameObject>();
+        List<Queue<GameObject>> PuzzlePool = new List<Queue<GameObject>>();
+
+
+
         PuzzleData puzzleData;
         GameObject tile;
         GameObject Tile 
@@ -26,6 +30,11 @@ namespace GHJ_Lib
         public void SetData(PuzzleData puzzleData)
         {
             this.puzzleData = puzzleData;
+
+            for (int i = 0; i < puzzleData.PuzzlePrefabs.Count; ++i)
+            {
+                PuzzlePool.Add(new Queue<GameObject>());
+            }
         }
 
         public void Setting(Puzzle puzzle)
@@ -37,8 +46,22 @@ namespace GHJ_Lib
             puzzle.PuzzleObj = Obj;
         }
 
-        public GameObject GeneratePuzzleOnHead(Hexa Head)
+        public void PutPool(Puzzle puzzle)
         {
+            PuzzlePool[(int)puzzle.type].Enqueue(puzzle.PuzzleObj);
+        }
+
+        public GameObject GeneratePuzzleOnHead(Puzzle spawnPuzzle)
+        {
+            int type = Random.Range((int)Puzzle.Type.Red, (int)Puzzle.Type.Purple + 1);
+
+            if (!PuzzlePool[type].TryDequeue(out spawnPuzzle.PuzzleObj))
+            {
+                spawnPuzzle.PuzzleObj = Instantiate(puzzleData.PuzzlePrefabs[type], Vector3.zero, Quaternion.identity);
+            }
+            spawnPuzzle.SetPuzzle((Puzzle.Type)type);
+            spawnPuzzle.PuzzleObj.SetActive(true);
+            spawnPuzzle.PuzzleObj.transform.position = spawnPuzzle.hexa.Position*Puzzle.Interval;
             return null;
         }
     }

@@ -17,6 +17,11 @@ namespace GHJ_Lib
         PuzzleData puzzleData;
         List<Puzzle> puzzleList = new List<Puzzle>();
         List<Hexa> BottomHexas = new List<Hexa>();
+
+        Puzzle headPuzzle;
+        Puzzle spawnPuzzle;
+
+
         Puzzle boundaryPuzzle;
         int hexaSize = 4;
         // Debug
@@ -49,7 +54,8 @@ namespace GHJ_Lib
             {
                 case GameState.Move:
                     {
-                        
+                        DropPuzzles();
+                        SpawnPuzzle();
                     }
                     break;
                 case GameState.Stop:
@@ -58,7 +64,9 @@ namespace GHJ_Lib
                     }
                     break;
                 case GameState.Swap:
-                    { }
+                    {
+                        
+                    }
                     break;
                 case GameState.CheckAll:
                     {
@@ -71,14 +79,6 @@ namespace GHJ_Lib
                             ErasePuzzle();
                             MoveSetting();
                         }
-                        if (Input.GetKeyDown(KeyCode.C))
-                        {
-                            for (int i = 0; i < puzzleList.Count; ++i)
-                            {
-                                int index = hexaCoordinateSystem.GetIndex(puzzleList[i].hexa);
-                                Debug.Log(index);
-                            }
-                        }
 
                     }
                     break;
@@ -87,15 +87,28 @@ namespace GHJ_Lib
         }
         private void FixedUpdate()
         {
-            for (int i = 0; i < puzzleList.Count; ++i)
-            {
-                puzzleList[i].DownMove();
+            switch (puzzleState)
+            { 
+                case GameState.Move:
+                    { 
+                        bool isMove = false;
+                            for (int i = 0; i < puzzleList.Count; ++i)
+                            {
+                                bool isPuzzleMove = puzzleList[i].DoDownMove();
+                                if (!isMove && isPuzzleMove)
+                                {
+                                    isMove = true;
+                                }
+                            }
+                            if (!isMove)
+                        puzzleState = GameState.Stop;
+                    }
+                    break;
             }
         }
         void initSetting()
         {
-            SetPuzzleAllRandom(hexaSize);
-
+            SetPuzzles(hexaSize);
             for (int i = 0; i < puzzleList.Count; ++i)
             {
                 puzzleGenerator.Setting(puzzleList[i]);
@@ -103,6 +116,8 @@ namespace GHJ_Lib
             boundaryPuzzle = new Puzzle(new Hexa(0, 0));
             boundaryPuzzle.SetPuzzle(Puzzle.Type.Boundary);
             SettingBottomHexas();
+            headPuzzle = GetPuzzle(Hexa.Up * (hexaSize - 1));
+            spawnPuzzle = new Puzzle(Hexa.Up * hexaSize);
         }
 
         void SettingBottomHexas()
@@ -114,7 +129,7 @@ namespace GHJ_Lib
             }
         }
 
-        void SetPuzzleAllRandom(int sideLength)
+        void SetPuzzles(int sideLength)
         {
             if (sideLength <= 0)
                 return;
@@ -246,10 +261,11 @@ namespace GHJ_Lib
             {
                 if (puzzleList[i].CurState == Puzzle.State.Erase)
                 {
+                    puzzleGenerator.PutPool(puzzleList[i]);
                     puzzleList[i].SetPuzzle(Puzzle.Type.Empty);
-                    puzzleGenerator.PuzzlePool.Enqueue(puzzleList[i].PuzzleObj);
                     puzzleList[i].PuzzleObj.SetActive(false);  // 만약 애니매이션이 존재한다면 애니매이션을 실행시키는 함수를 발동.
                     puzzleList[i].PuzzleObj = null;
+
                     isExistEmpty = true;
                 }
                 puzzleList[i].None();
@@ -290,7 +306,7 @@ namespace GHJ_Lib
                     if (DropPuzzle.type != Puzzle.Type.Empty)
                     {
                         DropPuzzle.SetDirection(destCursor, Hexa.Down);
-                        BottomHexas[i] = destHexa;
+                        BottomHexas[i] = destHexa +Hexa.Up;
                         destHexa = destHexa + Hexa.Up;
                         destCursor = GetPuzzle(destHexa);
                     }
@@ -300,27 +316,21 @@ namespace GHJ_Lib
             }
         }
 
-        void SearchDest()
-        {
-            for (int i= 0; i < BottomHexas.Count; ++i)
-            {
-                Hexa headPuzzleHexa = BottomHexas[i] + Hexa.Down;
-                
-            }
-        }
 
-        void DecideDest()
+        void DropPuzzles()
         {
-            
-        }
-
-            /*
             for (int i = 0; i < puzzleList.Count; ++i)
             {
-                if (puzzleList[i].type == Puzzle.Type.Empty && puzzleList[i].CurState != Puzzle.State.WaitPuzzle )
+                Puzzle DownPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.Down);
+
+                if (puzzleList[i].type != Puzzle.Type.Empty)
+                {
+                    continue;
+                }
+                else if (DownPuzzle.type != Puzzle.Type.Empty && DownPuzzle.CurState != Puzzle.State.Move)
                 {
                     Puzzle DropPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.Up);
-                    if (DropPuzzle.PuzzleObj != null&& DropPuzzle.CurState != Puzzle.State.Move)
+                    if (DropPuzzle.PuzzleObj != null && DropPuzzle.CurState != Puzzle.State.Move)
                     {
                         DropPuzzle.SetDirection(puzzleList[i], Hexa.Down);
                         continue;
@@ -338,9 +348,28 @@ namespace GHJ_Lib
                         continue;
                     }
                 }
-                
             }
-            */
+        }
+
+
+        void SpawnPuzzle()
+        {
+            if (headPuzzle.type == Puzzle.Type.Empty)
+            {
+                puzzleGenerator.GeneratePuzzleOnHead(spawnPuzzle);
+                spawnPuzzle.SetDirection(headPuzzle, Hexa.Down);
+            }
+        }
+
+        void DisplayHint()
+        { }
+
+        void TouchPuzzle()
+        {
+            //조건에 의해 puzzleStat = GameState.Swap()   
+        }
+        
+        
 
 
         void OnDrawGizmos()
