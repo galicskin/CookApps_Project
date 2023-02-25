@@ -37,13 +37,19 @@ namespace GHJ_Lib
             }
         }
 
-        public void Setting(Puzzle puzzle)
+        public void Setting(Puzzle puzzle , HexaTile.CallbackClickHexaTile OnClick , HexaTile.CallbackStartDragPuzzle OnStartDrag, HexaTile.CallbackEndDragPuzzle OnEndDrag)
         {
             Puzzle.SetInterval(Tile.transform.localScale.x * 0.5f);
             Vector2 position2D = puzzle.hexa.Position * Puzzle.Interval;
-            Instantiate(Tile, new Vector3(position2D.x, position2D.y) + Tile.transform.position, Tile.transform.rotation);
+
+            GameObject TileObj = Instantiate(Tile, new Vector3(position2D.x, position2D.y) + Tile.transform.position, Tile.transform.rotation);
+            HexaTile tile = TileObj.AddComponent<HexaTile>();
+            tile.SetPuzzle(puzzle);
+            tile.OnClickHexaTile = OnClick;
+
             GameObject Obj= Instantiate(puzzleData.PuzzlePrefabs[(int)puzzle.type], new Vector3(position2D.x, position2D.y), Quaternion.identity);
             puzzle.PuzzleObj = Obj;
+            
         }
 
         public void PutPool(Puzzle puzzle)

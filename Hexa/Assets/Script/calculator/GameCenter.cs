@@ -78,6 +78,7 @@ namespace GHJ_Lib
                         { 
                             ErasePuzzle();
                             MoveSetting();
+                            puzzleState = GameState.Move;
                         }
 
                     }
@@ -100,8 +101,8 @@ namespace GHJ_Lib
                                     isMove = true;
                                 }
                             }
-                            if (!isMove)
-                        puzzleState = GameState.Stop;
+                            //if (!isMove)
+                        //puzzleState = GameState.Stop;
                     }
                     break;
             }
@@ -111,7 +112,7 @@ namespace GHJ_Lib
             SetPuzzles(hexaSize);
             for (int i = 0; i < puzzleList.Count; ++i)
             {
-                puzzleGenerator.Setting(puzzleList[i]);
+                puzzleGenerator.Setting(puzzleList[i], TouchPuzzle , OnStartDrag,OnEndDrag);
             }
             boundaryPuzzle = new Puzzle(new Hexa(0, 0));
             boundaryPuzzle.SetPuzzle(Puzzle.Type.Boundary);
@@ -256,7 +257,6 @@ namespace GHJ_Lib
 
         void ErasePuzzle()
         {
-            bool isExistEmpty = false;
             for (int i = 0; i < puzzleList.Count; ++i)
             {
                 if (puzzleList[i].CurState == Puzzle.State.Erase)
@@ -266,19 +266,11 @@ namespace GHJ_Lib
                     puzzleList[i].PuzzleObj.SetActive(false);  // 만약 애니매이션이 존재한다면 애니매이션을 실행시키는 함수를 발동.
                     puzzleList[i].PuzzleObj = null;
 
-                    isExistEmpty = true;
                 }
                 puzzleList[i].None();
             }
-
-            if (isExistEmpty)
-            {
-                puzzleState = GameState.Move;
-            }
-            else
-            {
-                puzzleState = GameState.Stop;
-            }
+            
+            
         }
 
         // 기존에 있던 퍼즐들은 무조건 아래로, 새로생긴 퍼즐은 맨 위에서 퍼짐. (바로직선아래 오른쪽 왼쪽순서)
@@ -306,7 +298,6 @@ namespace GHJ_Lib
                     if (DropPuzzle.type != Puzzle.Type.Empty)
                     {
                         DropPuzzle.SetDirection(destCursor, Hexa.Down);
-                        BottomHexas[i] = destHexa +Hexa.Up;
                         destHexa = destHexa + Hexa.Up;
                         destCursor = GetPuzzle(destHexa);
                     }
@@ -322,20 +313,38 @@ namespace GHJ_Lib
             for (int i = 0; i < puzzleList.Count; ++i)
             {
                 Puzzle DownPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.Down);
-
                 if (puzzleList[i].type != Puzzle.Type.Empty)
                 {
                     continue;
                 }
                 else if (DownPuzzle.type != Puzzle.Type.Empty && DownPuzzle.CurState != Puzzle.State.Move)
                 {
-                    Puzzle DropPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.Up);
-                    if (DropPuzzle.PuzzleObj != null && DropPuzzle.CurState != Puzzle.State.Move)
+                    Puzzle DropPuzzle= GetPuzzle(puzzleList[i].hexa + Hexa.Up);
+
+                    while (DropPuzzle.type != Puzzle.Type.Boundary)
                     {
-                        DropPuzzle.SetDirection(puzzleList[i], Hexa.Down);
-                        continue;
+                        if (DropPuzzle.PuzzleObj != null && DropPuzzle.CurState != Puzzle.State.Move)
+                        {
+                            DropPuzzle.SetDirection(puzzleList[i], Hexa.Down);
+                            break;
+                        }
+                        else
+                            DropPuzzle = GetPuzzle(DropPuzzle.hexa + Hexa.Up);
                     }
-                    DropPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.RightUp);
+                    
+                }
+            }
+
+            for (int i = 0; i < puzzleList.Count; ++i)
+            {
+                Puzzle DownPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.Down);
+                if (puzzleList[i].type != Puzzle.Type.Empty)
+                {
+                    continue;
+                }
+                else if (DownPuzzle.type != Puzzle.Type.Empty && DownPuzzle.CurState != Puzzle.State.Move)
+                {
+                    Puzzle DropPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.RightUp);
                     if (DropPuzzle.PuzzleObj != null && DropPuzzle.CurState != Puzzle.State.Move)
                     {
                         DropPuzzle.SetDirection(puzzleList[i], Hexa.LeftDown);
@@ -348,6 +357,7 @@ namespace GHJ_Lib
                         continue;
                     }
                 }
+                
             }
         }
 
@@ -362,14 +372,28 @@ namespace GHJ_Lib
         }
 
         void DisplayHint()
-        { }
+        {
+            
+        }
 
         void TouchPuzzle()
         {
             //조건에 의해 puzzleStat = GameState.Swap()   
         }
-        
-        
+
+        void TouchPuzzle(Puzzle puzzle)
+        {
+
+        }
+
+        void OnStartDrag()
+        {
+            
+        }
+        void OnEndDrag()
+        {
+            
+        }
 
 
         void OnDrawGizmos()

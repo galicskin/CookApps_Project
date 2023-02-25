@@ -24,13 +24,16 @@ namespace GHJ_Lib
 			Check,
 			Erase,
 			Move,
+			SpawnMove,
 		}
-		
 		public Puzzle(Hexa hexa)
 		{
 			this.hexa = hexa;
 			SetPuzzle();
 		}
+
+		
+
 		public GameObject PuzzleObj = null;
 		public Hexa hexa { get; private set; }
 		public Type type { get; private set; }
@@ -41,7 +44,7 @@ namespace GHJ_Lib
 		}
 		Hexa moveHexaDirection=new Hexa(0,0);
 		//Puzzle destPuzzle;
-		float MoveVelocity = 10.0f;
+		float MoveVelocity = 50.0f;
 
 		public void None()
 		{
@@ -73,6 +76,16 @@ namespace GHJ_Lib
 			destPuzzle.moveHexaDirection = direction;
 			destPuzzle.CurState = State.Move;
 		}
+		public void SetDirection(Puzzle destPuzzle, Hexa direction,bool IsSpawn)
+		{
+			Swap(destPuzzle);
+			destPuzzle.moveHexaDirection = direction;
+			if(IsSpawn)
+			destPuzzle.CurState = State.SpawnMove;
+		}
+
+
+
 		public void Stop()
 		{
 			moveHexaDirection = new Hexa(0, 0);
@@ -108,7 +121,7 @@ namespace GHJ_Lib
 
 			DestPuzzle.PuzzleObj = tempObj;
 			DestPuzzle.type = tempType;
-			
+
 		}
 	}
 }

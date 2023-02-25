@@ -165,8 +165,6 @@ namespace GHJ_Lib
         {
             return new Vector2(q * 1.5f, 1.732f * (s - r)*0.5f);
         }
-
-
     }
 
 }
