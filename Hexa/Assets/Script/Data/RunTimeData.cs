@@ -4,8 +4,9 @@ using UnityEngine;
 
 namespace GHJ_Lib
 {
-	public class RunTimeData: ScriptableObject
-	{
-		
-	}
+    public class RunTimeData : ScriptableObject
+    {
+
+    }
 }
+

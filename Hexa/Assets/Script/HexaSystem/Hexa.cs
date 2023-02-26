@@ -42,8 +42,33 @@ namespace GHJ_Lib
             return a.q != b.q || a.r != b.r || a.q != b.q;
         }
 
+        public static int Distance(Hexa a ,Hexa b)
+        {
+            Hexa hexa = a - b;
+            return GetCycle(hexa);
+        }
 
+        public static int GetCycle(Hexa hexa)
+        {
 
+            int q = hexa.q < 0 ? -hexa.q : hexa.q;
+            int r = hexa.r < 0 ? -hexa.r : hexa.r;
+            int s = hexa.s < 0 ? -hexa.s : hexa.s;
+
+            return Mathf.Max(q, r, s);
+        }
+
+        public static Hexa[] GetAround(Hexa hexa)
+        {
+            Hexa[] Around = new Hexa[6];
+            Around[0] = hexa + Up;
+            Around[1] = hexa + RightUp;
+            Around[2] = hexa + RightDown;
+            Around[3] = hexa + Down;
+            Around[4] = hexa + LeftDown;
+            Around[5] = hexa + LeftUp;
+            return Around;
+        }
         public static Hexa Up
         {
             get 
@@ -165,6 +190,8 @@ namespace GHJ_Lib
         {
             return new Vector2(q * 1.5f, 1.732f * (s - r)*0.5f);
         }
+
+
     }
 
 }

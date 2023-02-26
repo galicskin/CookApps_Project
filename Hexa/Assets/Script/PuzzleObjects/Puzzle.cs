@@ -6,7 +6,9 @@ namespace GHJ_Lib
 {
 	public class Puzzle 
 	{
-		public static float Interval { get; private set; }
+		static float interval;
+		public static float Interval { get { return ObjectSet.transform.localScale.x * interval; } }
+		static GameObject ObjectSet;
 		public enum Type {
 			Red = 0,
 			Blue,
@@ -15,8 +17,10 @@ namespace GHJ_Lib
 			Yellow,
 			Purple,
 			Top,
+			TopSpin,
 			Boundary,
-			Empty
+			Empty,
+			Obstacle
 		}
 
 		public enum State {
@@ -24,7 +28,7 @@ namespace GHJ_Lib
 			Check,
 			Erase,
 			Move,
-			SpawnMove,
+			Swap
 		}
 		public Puzzle(Hexa hexa)
 		{
@@ -32,19 +36,18 @@ namespace GHJ_Lib
 			SetPuzzle();
 		}
 
-		
-
 		public GameObject PuzzleObj = null;
-		public Hexa hexa { get; private set; }
-		public Type type { get; private set; }
-		public State CurState { get; private set; } = State.None;
-        public static void SetInterval(float TileSideLength)
+		public Hexa hexa { get; protected set; }
+		public Type type { get; protected set; }
+		public State CurState { get; protected set; } = State.None;
+        public static void SetInterval(float TileSideLength,GameObject scaleObject)
 		{
-			Interval = TileSideLength;
+			interval = TileSideLength;
+			ObjectSet = scaleObject;
 		}
 		Hexa moveHexaDirection=new Hexa(0,0);
 		//Puzzle destPuzzle;
-		float MoveVelocity = 50.0f;
+		protected float MoveVelocity = 50.0f;
 
 		public void None()
 		{
@@ -72,46 +75,65 @@ namespace GHJ_Lib
 
 		public void SetDirection(Puzzle destPuzzle, Hexa direction)
 		{
-			Swap(destPuzzle);
+			SwapObject(destPuzzle);
 			destPuzzle.moveHexaDirection = direction;
 			destPuzzle.CurState = State.Move;
 		}
-		public void SetDirection(Puzzle destPuzzle, Hexa direction,bool IsSpawn)
+
+		public void Swap(Puzzle puzzle)
 		{
-			Swap(destPuzzle);
-			destPuzzle.moveHexaDirection = direction;
-			if(IsSpawn)
-			destPuzzle.CurState = State.SpawnMove;
+			SwapObject(puzzle);
+			moveHexaDirection =  hexa- puzzle.hexa;
+			CurState = State.Swap;
+
+			puzzle.moveHexaDirection = puzzle.hexa - hexa;
+			puzzle.CurState = State.Swap;
+
 		}
-
-
 
 		public void Stop()
 		{
 			moveHexaDirection = new Hexa(0, 0);
 			CurState = State.Check;
 		}
-		public bool DoDownMove()
-		{
-			if (CurState != State.Move)
-				return false;
 
-			Vector2 vector2Pos= new Vector2(PuzzleObj.transform.position.x, PuzzleObj.transform.position.y);
-			if ((vector2Pos - hexa.Position*Interval).sqrMagnitude < 0.01f)
+		public void Do(State DoingState, State endState)
+		{
+			if (CurState != DoingState)
+				return ;
+			if (type == Type.Top)
 			{
-				PuzzleObj.transform.position = hexa.Position*Interval;
-				Stop();
+				int d = 11;
+			}
+			Vector2 vector2Pos = new Vector2(PuzzleObj.transform.position.x, PuzzleObj.transform.position.y);
+			if ((vector2Pos - hexa.Position * Interval).sqrMagnitude < 0.01f)
+			{
+				PuzzleObj.transform.position = hexa.Position * Interval;
+				moveHexaDirection = new Hexa(0, 0);
+				CurState = endState;
 			}
 			else
-			{ 
+			{
 				Vector3 moveDirection = new Vector3(moveHexaDirection.Position.x, moveHexaDirection.Position.y);
-				PuzzleObj.transform.Translate(moveDirection * Time.deltaTime* MoveVelocity);
+				PuzzleObj.transform.Translate(moveDirection * Time.deltaTime * MoveVelocity);
 			}
 
-			return true;
+			return ;
 		}
 
-		void Swap(Puzzle DestPuzzle)
+		public void Glow()
+		{
+			if (PuzzleObj != null)
+				PuzzleObj.transform.GetChild(0).gameObject.SetActive(true);
+		}
+
+		public void CancelGlow()
+		{
+			if (PuzzleObj != null)
+				PuzzleObj.transform.GetChild(0).gameObject.SetActive(false);
+		}
+
+		protected void SwapObject(Puzzle DestPuzzle)
 		{
 			GameObject tempObj = PuzzleObj;
 			Type tempType = type;

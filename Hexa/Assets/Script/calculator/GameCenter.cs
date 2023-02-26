@@ -5,11 +5,9 @@ using UnityEngine;
 
 namespace GHJ_Lib
 {
-	public class GameCenter : MonoBehaviour
-	{
-
-		PuzzleGenerator puzzleGenerator;
-        HexaLogicCalculator calculator;
+    public class GameCenter : MonoBehaviour
+    {
+        PuzzleGenerator puzzleGenerator;
         HexaCoordinateSystem hexaCoordinateSystem;
 
 
@@ -17,25 +15,32 @@ namespace GHJ_Lib
         PuzzleData puzzleData;
         List<Puzzle> puzzleList = new List<Puzzle>();
         List<Hexa> BottomHexas = new List<Hexa>();
+        List<Puzzle> TopList = new List<Puzzle>();
+        int TopCount;
 
         Puzzle headPuzzle;
         Puzzle spawnPuzzle;
 
+        Puzzle pickedPuzzle = null;
+        Puzzle overedPuzzle = null;
 
         Puzzle boundaryPuzzle;
         int hexaSize = 4;
+        bool isTouch = false;
+        bool IsFailToSwap = false;
+
         // Debug
         List<Hexa> DebugList = new List<Hexa>();
         List<Puzzle> checkList = new List<Puzzle>();
 
 
-        enum GameState { 
-        Move,
-        Stop,
-        Swap,
-        CheckAll,
-        }
 
+        enum GameState {
+            Move,
+            Stop,
+            Swap,
+            CheckAll,
+        }
         GameState puzzleState = GameState.CheckAll;
         void Start()
         {
@@ -43,10 +48,13 @@ namespace GHJ_Lib
             puzzleData = Datamanager.Instance.PuzzleData;
             GameObject GeneratorObj = new GameObject("PuzzleGenerator");
             puzzleGenerator = GeneratorObj.AddComponent<PuzzleGenerator>();
+            playerData.InitGame();
             puzzleGenerator.SetData(puzzleData);
             initSetting();
+            //ScreenSetting();
 
         }
+
 
         void Update()
         {
@@ -56,31 +64,77 @@ namespace GHJ_Lib
                     {
                         DropPuzzles();
                         SpawnPuzzle();
+                        bool isMove = false;
+                        for (int i = 0; i < puzzleList.Count; ++i)
+                        {
+                            if (!isMove && puzzleList[i].CurState ==Puzzle.State.Move)
+                            {
+                                isMove = true;
+                                break;
+                            }
+                        }
+
+                        if (!isMove)
+                        {
+                            SetNonePuzzle();
+                            puzzleState = GameState.CheckAll;
+                        }
                     }
                     break;
                 case GameState.Stop:
                     {
+                        if (pickedPuzzle == null || overedPuzzle == null)
+                            break;
+                        bool IsPickPuzzleSwapMove = pickedPuzzle.CurState == Puzzle.State.Swap;
+                        bool IsOveredPuzzleSwapMove = pickedPuzzle.CurState == Puzzle.State.Swap;
 
+                        if (!IsOveredPuzzleSwapMove && !IsPickPuzzleSwapMove)
+                        {
+                            if (!isTouch)
+                                puzzleState = GameState.Swap;
+                        }
                     }
                     break;
                 case GameState.Swap:
                     {
-                        
+                        if (pickedPuzzle == null || overedPuzzle == null)
+                            return;
+                        bool IsPickPuzzleSwapMove = pickedPuzzle.CurState == Puzzle.State.Swap;
+                        bool IsOveredPuzzleSwapMove = pickedPuzzle.CurState == Puzzle.State.Swap;
+                        if (!IsOveredPuzzleSwapMove && !IsPickPuzzleSwapMove)
+                        {
+                            if (IsFailToSwap)
+                            {
+                                SuccessSwap();
+                                puzzleState = GameState.Stop;
+                            }
+                            else if (CheckPuzzlesMove())
+                            {
+                                SuccessSwap();
+                                SetNonePuzzle();
+                                puzzleState = GameState.CheckAll;
+                            }
+                            else
+                            {
+                                pickedPuzzle.Swap(overedPuzzle);
+                                IsFailToSwap = true;
+                            }
+                        }
                     }
                     break;
                 case GameState.CheckAll:
                     {
-                        if (Input.GetKeyDown(KeyCode.A))
-                        {
-                            CheckAllPuzzle();
-                        }
-                        if (Input.GetKeyDown(KeyCode.B))
-                        { 
-                            ErasePuzzle();
-                            MoveSetting();
-                            puzzleState = GameState.Move;
-                        }
+                        UpdateTopList();
 
+                        if (CheckPuzzlesMove())
+                            puzzleState = GameState.Move;
+                        else
+                            puzzleState = GameState.Stop;
+
+                        ErasePuzzle();
+                        CheckTopAround();
+                        SetNonePuzzle();
+                        MoveSetting();
                     }
                     break;
 
@@ -89,30 +143,69 @@ namespace GHJ_Lib
         private void FixedUpdate()
         {
             switch (puzzleState)
-            { 
+            {
                 case GameState.Move:
-                    { 
-                        bool isMove = false;
-                            for (int i = 0; i < puzzleList.Count; ++i)
-                            {
-                                bool isPuzzleMove = puzzleList[i].DoDownMove();
-                                if (!isMove && isPuzzleMove)
-                                {
-                                    isMove = true;
-                                }
-                            }
-                            //if (!isMove)
-                        //puzzleState = GameState.Stop;
+                    {
+                        for (int i = 0; i < puzzleList.Count; ++i)
+                        {
+                            puzzleList[i].Do(Puzzle.State.Move, Puzzle.State.Check);
+                        }
+                    }
+                    break;
+                case GameState.Stop:
+                    {
+                        if (pickedPuzzle == null || overedPuzzle == null)
+                            return;
+                        pickedPuzzle.Do(Puzzle.State.Swap, Puzzle.State.None);
+                        overedPuzzle.Do(Puzzle.State.Swap, Puzzle.State.None);
+                    }
+                    break;
+                case GameState.Swap:
+                    {
+                        if (pickedPuzzle == null || overedPuzzle == null)
+                            return;
+                        pickedPuzzle.Do(Puzzle.State.Swap, Puzzle.State.None);
+                        overedPuzzle.Do(Puzzle.State.Swap, Puzzle.State.None);
                     }
                     break;
             }
         }
+
+        void SuccessSwap()
+        {
+            pickedPuzzle = null;
+            overedPuzzle = null;
+            IsFailToSwap = false;
+            playerData.MovePuzzle();
+        }
+
         void initSetting()
         {
             SetPuzzles(hexaSize);
+            List<Hexa> TopHexas = new List<Hexa>();
+            TopHexas.Add(new Hexa(0, 1));
+            TopHexas.Add(new Hexa(1, -3));
+            TopHexas.Add(new Hexa(2, -3));
+            TopHexas.Add(new Hexa(-1, -2));
+            TopHexas.Add(new Hexa(-2, -1));
+            TopHexas.Add(new Hexa(-2, 3));
+            TopHexas.Add(new Hexa(-1, 3));
+            TopHexas.Add(new Hexa(0, 3));
+            TopHexas.Add(new Hexa(1, 2));
+            TopHexas.Add(new Hexa(2, 1));
+            SetPuzzleType(TopHexas, Puzzle.Type.Top);
+
+            // >> Top 추가
+            for (int i = 0; i < TopHexas.Count; ++i)
+            {
+                TopList.Add(GetPuzzle(TopHexas[i]));
+            }
+            TopCount = TopList.Count; 
+            // <<
+
             for (int i = 0; i < puzzleList.Count; ++i)
             {
-                puzzleGenerator.Setting(puzzleList[i], TouchPuzzle , OnStartDrag,OnEndDrag);
+                puzzleGenerator.Setting(puzzleList[i], TouchPuzzle , OnOver,OnTouchUp);
             }
             boundaryPuzzle = new Puzzle(new Hexa(0, 0));
             boundaryPuzzle.SetPuzzle(Puzzle.Type.Boundary);
@@ -146,22 +239,31 @@ namespace GHJ_Lib
             }
         }
 
-        void CheckAllPuzzle()
+        bool CheckPuzzlesMove()
         {
+            bool IsExistErasePuzzle = false;
             for (int i = 0; i < puzzleList.Count; ++i)
             {
-                if (puzzleList[i].CurState != Puzzle.State.None)
+                if (puzzleList[i].CurState != Puzzle.State.None )
                     continue;
                 puzzleList[i].Check();
                 Hexa CheckHexa = puzzleList[i].hexa;
-                CheckLinear(CheckHexa);
-                CheckBoomerang(CheckHexa);
+                bool IsEraseLinear = CheckLinear(CheckHexa);
+                bool IsEraseBoomerang = CheckBoomerang(CheckHexa);
+
+                if (!IsExistErasePuzzle)
+                    IsExistErasePuzzle = IsEraseLinear || IsEraseBoomerang;
+
             }
+            return IsExistErasePuzzle;
         }
 
-        void CheckBoomerang(Hexa center)
+        bool CheckBoomerang(Hexa center)
         {
+            bool IsExistErasePuzzle = false;
             Puzzle CetnerPuzzle = GetPuzzle(center);
+            if (CetnerPuzzle.type >= Puzzle.Type.Top)
+                return IsExistErasePuzzle;
             Puzzle[] BoomerangPuzzleList = new Puzzle[9];
             BoomerangPuzzleList[0] = GetPuzzle(center + new Hexa(-1, 0));
             BoomerangPuzzleList[1] = GetPuzzle(center + new Hexa(0, -1));
@@ -180,22 +282,25 @@ namespace GHJ_Lib
                && CetnerPuzzle.type == BoomerangPuzzleList[index+1].type
                && CetnerPuzzle.type == BoomerangPuzzleList[index+2].type)
                 {
+                    IsExistErasePuzzle = true;
                     CetnerPuzzle.Erase();
                     BoomerangPuzzleList[index].Erase();
                     BoomerangPuzzleList[index+1].Erase();
                     BoomerangPuzzleList[index+2].Erase();
                 }
             }
+            return IsExistErasePuzzle;
 
         }
 
-        
-        void CheckLinear(Hexa center)
+
+        bool CheckLinear(Hexa center)
         {
+            bool IsExistErasePuzzle = false;
             Puzzle.Type centerType = GetPuzzle(center).type;
+            if (centerType >= Puzzle.Type.Top)
+                return IsExistErasePuzzle;
             Hexa[] hexaAry = HexaCoordinateSystem.GetHexaVectors();
-
-
             for (int i = 0; i < hexaAry.Length; ++i)
             {
                 Puzzle frontPuzzle = GetPuzzle(center + hexaAry[i]);
@@ -206,6 +311,7 @@ namespace GHJ_Lib
                     frontPuzzle.Check();
                     if (centerType == GetPuzzle(frontPuzzle.hexa + hexaAry[i]).type || centerType == BackPuzzle.type)
                     {
+                        IsExistErasePuzzle = true;
                         SelectLinear(hexaAry[i], center, centerType);
                     }
                 }
@@ -213,11 +319,14 @@ namespace GHJ_Lib
                 {
                     BackPuzzle.Check();
                     if (centerType == GetPuzzle(BackPuzzle.hexa - hexaAry[i]).type)
-                    { 
+                    {
+                        IsExistErasePuzzle = true;
                         SelectLinear(hexaAry[i], center, centerType);
                     }
                 }
             }
+
+            return IsExistErasePuzzle;
         }
         
         Puzzle GetPuzzle(Hexa hexa)
@@ -251,29 +360,87 @@ namespace GHJ_Lib
                 direction = direction + vector;
                 Checkpuzzle = GetPuzzle(Center - direction);
             }
-            if (checkList.Count < 3)
-            { }
         }
 
         void ErasePuzzle()
         {
             for (int i = 0; i < puzzleList.Count; ++i)
             {
-                if (puzzleList[i].CurState == Puzzle.State.Erase)
+                if (puzzleList[i].CurState == Puzzle.State.Erase && puzzleList[i].PuzzleObj !=null)
                 {
                     puzzleGenerator.PutPool(puzzleList[i]);
-                    puzzleList[i].SetPuzzle(Puzzle.Type.Empty);
                     puzzleList[i].PuzzleObj.SetActive(false);  // 만약 애니매이션이 존재한다면 애니매이션을 실행시키는 함수를 발동.
                     puzzleList[i].PuzzleObj = null;
+                    puzzleList[i].SetPuzzle(Puzzle.Type.Empty);
 
                 }
-                puzzleList[i].None();
             }
-            
             
         }
 
-        // 기존에 있던 퍼즐들은 무조건 아래로, 새로생긴 퍼즐은 맨 위에서 퍼짐. (바로직선아래 오른쪽 왼쪽순서)
+        void CheckTopAround()
+        {
+            int RainBowCount = 0;
+
+            for (int i = 0; i < TopList.Count; ++i)
+            {
+                Hexa[] hexas = Hexa.GetAround(TopList[i].hexa);
+                bool IsHit = false;
+                for (int j = 0; j < hexas.Length; ++j)
+                {
+                    Puzzle AroundPuzzle = GetPuzzle(hexas[j]);
+
+                    if (AroundPuzzle.CurState == Puzzle.State.Erase)
+                    {
+                        IsHit = true;
+                        if (HittedTop(TopList[i]))
+                            ++RainBowCount;
+                        break;
+                    }
+                    if (IsHit)
+                        break;
+                }
+
+            }
+
+            if (RainBowCount > 0 )
+            {
+                TopCount -= RainBowCount;
+                playerData.UpdateRainbowScore(RainBowCount);
+            }
+        }
+
+      
+
+        bool HittedTop(Puzzle puzzle)
+        {
+            
+            if (puzzle.type == Puzzle.Type.Top)
+            {
+                
+                puzzle.SetPuzzle(Puzzle.Type.TopSpin);
+                puzzle.PuzzleObj.transform.GetChild(1).GetComponent<Animator>().SetBool("IsSpin", true);
+            }
+            else if (puzzle.type == Puzzle.Type.TopSpin)
+            {
+                
+                puzzle.PuzzleObj.SetActive(false);  // 만약 애니매이션이 존재한다면 애니매이션을 실행시키는 함수를 발동.
+                puzzle.PuzzleObj = null;
+                puzzle.SetPuzzle(Puzzle.Type.Empty);
+                return true;
+            }
+
+            return false;
+        }
+
+        void SetNonePuzzle()
+        {
+            for (int i = 0; i < puzzleList.Count; ++i)
+            {
+                puzzleList[i].None();
+            }
+        }
+
         void MoveSetting()
         {
             for (int i = 0; i < BottomHexas.Count; ++i)
@@ -326,6 +493,7 @@ namespace GHJ_Lib
                         if (DropPuzzle.PuzzleObj != null && DropPuzzle.CurState != Puzzle.State.Move)
                         {
                             DropPuzzle.SetDirection(puzzleList[i], Hexa.Down);
+                            
                             break;
                         }
                         else
@@ -348,12 +516,14 @@ namespace GHJ_Lib
                     if (DropPuzzle.PuzzleObj != null && DropPuzzle.CurState != Puzzle.State.Move)
                     {
                         DropPuzzle.SetDirection(puzzleList[i], Hexa.LeftDown);
+                        
                         continue;
                     }
                     DropPuzzle = GetPuzzle(puzzleList[i].hexa + Hexa.LeftUp);
                     if (DropPuzzle.PuzzleObj != null && DropPuzzle.CurState != Puzzle.State.Move)
                     {
                         DropPuzzle.SetDirection(puzzleList[i], Hexa.RightDown);
+                        
                         continue;
                     }
                 }
@@ -361,6 +531,19 @@ namespace GHJ_Lib
             }
         }
 
+        void UpdateTopList()
+        {
+            TopList.Clear();
+            for (int i = 0; i < puzzleList.Count; ++i)
+            {
+                if (puzzleList[i].type == Puzzle.Type.Top || puzzleList[i].type == Puzzle.Type.TopSpin)
+                {
+                    TopList.Add(puzzleList[i]);
+                    if (TopList.Count == TopCount)
+                        return;
+                }
+            }
+        }
 
         void SpawnPuzzle()
         {
@@ -371,38 +554,28 @@ namespace GHJ_Lib
             }
         }
 
-        void DisplayHint()
-        {
-            
-        }
-
-        void TouchPuzzle()
-        {
-            //조건에 의해 puzzleStat = GameState.Swap()   
-        }
-
         void TouchPuzzle(Puzzle puzzle)
         {
-
-        }
-
-        void OnStartDrag()
-        {
-            
-        }
-        void OnEndDrag()
-        {
-            
-        }
-
-
-        void OnDrawGizmos()
-        {
-            for (int i = 0; i < puzzleList.Count; ++i)
-            {
-                if (puzzleList[i].CurState == Puzzle.State.Erase)
-                    Gizmos.DrawSphere(puzzleList[i].PuzzleObj.transform.position, 1.0f);
+            if (puzzleState == GameState.Stop && puzzle.type < Puzzle.Type.Purple+1)
+            { 
+                pickedPuzzle = puzzle;
+                isTouch = true;
             }
         }
+
+        void OnOver(Puzzle puzzle )
+        {
+            if (pickedPuzzle != null && overedPuzzle==null && puzzle.type < Puzzle.Type.Purple + 1)
+            {
+                overedPuzzle = puzzle;
+                pickedPuzzle.Swap(overedPuzzle);
+            }
+        }
+
+        void OnTouchUp()
+        {
+            isTouch = false;
+        }
+
     }
 }

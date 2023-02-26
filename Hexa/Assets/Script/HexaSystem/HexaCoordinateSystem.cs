@@ -106,10 +106,7 @@ namespace GHJ_Lib
 
 				Debug.LogError($"this hexaIndex not exist, q : {q}, r : {r}, s: {s} cycle : {cycle} , element {element}");
 			}
-			
 		}
-
-
 		static int maxAbs(int q, int r, int s)
 		{
 			q = q < 0 ? -q : q;
@@ -117,7 +114,6 @@ namespace GHJ_Lib
 			s = s < 0 ? -s : s;
 
 			return Mathf.Max(q, r, s);
-
 		}
 	}
 }
