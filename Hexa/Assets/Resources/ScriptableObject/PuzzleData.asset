@@ -13,12 +13,12 @@ MonoBehaviour:
   m_Name: PuzzleData
   m_EditorClassIdentifier: 
   PuzzlePrefabs:
-  - {fileID: 6069889198721904690, guid: 97ba28d626ba2e740bd6b5d027970a01, type: 3}
-  - {fileID: 5151820559828837569, guid: 0046f1f18de014541ad1518d428680cb, type: 3}
-  - {fileID: 6012575600642790059, guid: 48766b652ce7f904eada88d1d01de22f, type: 3}
-  - {fileID: 4657855264925360129, guid: 37632751b75a72e4384668eaca23775d, type: 3}
-  - {fileID: 2605092877914506123, guid: 10fb11cebb3ba464eb64029f46bb8a7f, type: 3}
-  - {fileID: 5346224575796666797, guid: 8baeac67af54c624ea64b7326c441023, type: 3}
-  - {fileID: 8374319449720101443, guid: 3b58a443174eab5409b5deef0d8e2492, type: 3}
+  - {fileID: 1011274993695088809, guid: 17d927ea549a28b409f589db2d89e51d, type: 3}
+  - {fileID: 7394298791118058895, guid: 233e04db728b7d145bacaed00331fa3d, type: 3}
+  - {fileID: 3663682703137092388, guid: d7dae5d1f098fd84ea2ef513e9e458b4, type: 3}
+  - {fileID: 7446121831651583843, guid: f0b9f3c1970211e46af54aabd70d4038, type: 3}
+  - {fileID: 8445377561431086965, guid: 4d7b13eecd6cbad478f8b0e560fcf946, type: 3}
+  - {fileID: 1728486356881854569, guid: 1da79484ee1e1224e9701689344d2b0b, type: 3}
+  - {fileID: 2327049799958550920, guid: dd5011d139172ea41b733caf5a1be9cd, type: 3}
   TilePrefab: {fileID: 3605697433646440633, guid: e27370031b4c83541aecf2ff0c544a36,
     type: 3}

@@ -4,11 +4,23 @@ using UnityEngine;
 
 namespace GHJ_Lib
 {
-	public class Puzzle 
+	public class Puzzle
 	{
 		static float interval;
 		public static float Interval { get { return ObjectSet.transform.localScale.x * interval; } }
 		static GameObject ObjectSet;
+		Animator animator;
+		public Animator Animator
+		{
+			get
+			{
+				if (animator == null)
+				{
+					animator = PuzzleObj.transform.GetChild(0).GetComponent<Animator>();
+				}
+				return animator;
+			}
+		}
 		public enum Type {
 			Red = 0,
 			Blue,
@@ -32,6 +44,7 @@ namespace GHJ_Lib
 		}
 		public Puzzle(Hexa hexa)
 		{
+			
 			this.hexa = hexa;
 			SetPuzzle();
 		}
@@ -124,13 +137,13 @@ namespace GHJ_Lib
 		public void Glow()
 		{
 			if (PuzzleObj != null)
-				PuzzleObj.transform.GetChild(0).gameObject.SetActive(true);
+				PuzzleObj.transform.GetChild(0).GetChild(0).gameObject.SetActive(true);
 		}
 
 		public void CancelGlow()
 		{
 			if (PuzzleObj != null)
-				PuzzleObj.transform.GetChild(0).gameObject.SetActive(false);
+				PuzzleObj.transform.GetChild(0).GetChild(0).gameObject.SetActive(false);
 		}
 
 		protected void SwapObject(Puzzle DestPuzzle)

@@ -419,7 +419,7 @@ namespace GHJ_Lib
             {
                 
                 puzzle.SetPuzzle(Puzzle.Type.TopSpin);
-                puzzle.PuzzleObj.transform.GetChild(1).GetComponent<Animator>().SetBool("IsSpin", true);
+                puzzle.Animator.SetBool("IsSpin", true);
             }
             else if (puzzle.type == Puzzle.Type.TopSpin)
             {
